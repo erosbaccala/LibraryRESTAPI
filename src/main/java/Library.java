@@ -16,9 +16,9 @@ public class Library {
         return (isbn == null || isbn.trim().length() == 0) || (titolo == null || titolo.trim().length() == 0) || (autore == null || autore.trim().length() == 0);
     }
 
-    @POST
+    @GET
     @Path("/all")
-    @Produces(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response read(){
         final String QUERY = "SELECT * FROM Libri";
         final List<Book> books = new ArrayList<>();
