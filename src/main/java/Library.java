@@ -1,8 +1,10 @@
 import com.google.gson.Gson;
 
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -14,9 +16,9 @@ public class Library {
         return (isbn == null || isbn.trim().length() == 0) || (titolo == null || titolo.trim().length() == 0) || (autore == null || autore.trim().length() == 0);
     }
 
-    @GET
+    @POST
     @Path("/all")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_FORM_URLENCODED)
     public Response read(){
         final String QUERY = "SELECT * FROM Libri";
         final List<Book> books = new ArrayList<>();
@@ -130,6 +132,56 @@ public class Library {
             return Response.serverError().entity(obj).build();
         }
         String obj = new Gson().toJson("Libro con ISBN:" + isbn + " eliminato con successo");
+        return Response.ok(obj,MediaType.APPLICATION_JSON).build();
+    }
+
+    @POST
+    @Path("/newLoan")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Response create(@FormParam("ID") String id,
+                           @FormParam("User")String user){
+        int qt=-1;
+        if(checkParams(id, user, "aut")) {
+            String obj = new Gson().toJson("Parameters must be valid");
+            return Response.serverError().entity(obj).build();
+        }
+        final String QUERY = "INSERT INTO Prestiti(Utente,Libro,DataInizio) VALUES(?,?,?)";
+        final String QUERY1 = "SELECT Qt FROM Libri WHERE ID="+id;
+        final String QUERY_QT = "UPDATE Libri SET Qt=? WHERE ID="+id;
+        final String[] data = Database.getData();
+        try(
+
+                Connection conn = DriverManager.getConnection(data[0]);
+                Statement stmt = conn.createStatement();
+                PreparedStatement pstmt = conn.prepareStatement( QUERY );
+                PreparedStatement pstmt_qt = conn.prepareStatement( QUERY_QT );
+        ) {
+            SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String date = sdfDate.format(new Date());
+            pstmt.setString(1, user);
+            pstmt.setString(2, id);
+            pstmt.setString(3, date);
+            
+            ResultSet rs = stmt.executeQuery(QUERY1);
+            if(rs.next())
+                qt = rs.getInt(1);
+            if(qt>0){
+                qt--;
+                pstmt.execute();
+                pstmt_qt.setInt(1, qt);
+                pstmt_qt.execute();
+            }else{
+                String obj = new Gson().toJson("Tutti i libri con ID "+id+"sono già in prestito");
+                return Response.ok(obj,MediaType.APPLICATION_JSON).build();
+            }
+
+        }catch (SQLException e){
+            e.printStackTrace();
+            String obj = new Gson().toJson(error);
+            return Response.serverError().entity(obj).build();
+        }
+        String obj = new Gson().toJson("Libro con ID:" + id + " prestato con successo a "+user);
         return Response.ok(obj,MediaType.APPLICATION_JSON).build();
     }
 }
