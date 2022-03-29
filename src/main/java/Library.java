@@ -184,4 +184,46 @@ public class Library {
         String obj = new Gson().toJson("Libro con ID:" + id + " prestato con successo a "+user);
         return Response.ok(obj,MediaType.APPLICATION_JSON).build();
     }
+
+    @POST
+    @Path("/endLoan")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Response create(@FormParam("ID") int id){
+        int qt=-1;
+        /*if(checkParams(id, "user", "aut")) {
+            String obj = new Gson().toJson("Parameters must be valid");
+            return Response.serverError().entity(obj).build();
+        }*/
+        final String QUERY = "UPDATE Prestiti SET Rientrato=1 WHERE ID=?";
+        final String QUERY_CHECK = "SELECT * FROM Prestiti WHERE ID=?";
+        final String QUERY_PIU = "UPDATE Libri SET Qt=(SELECT Qt+1 FROM Libri WHERE ID="+id+") WHERE ID="+id;
+        final String[] data = Database.getData();
+        try(
+
+                Connection conn = DriverManager.getConnection(data[0]);
+                Statement stmt = conn.createStatement();
+                PreparedStatement pstmt = conn.prepareStatement( QUERY );
+                PreparedStatement pstmt_check = conn.prepareStatement(QUERY_CHECK);
+        ) {
+            pstmt_check.setInt(1, id);
+            
+            ResultSet rs = stmt.executeQuery(QUERY_CHECK);
+            if(rs.next()){
+                pstmt.setInt(1, id);
+                pstmt.execute();
+                stmt.executeQuery(QUERY_PIU);
+            }else{
+                String obj = new Gson().toJson("Nessun prestito con ID "+id+" trovato");
+                return Response.ok(obj,MediaType.APPLICATION_JSON).build();
+            }
+
+        }catch (SQLException e){
+            e.printStackTrace();
+            String obj = new Gson().toJson(error);
+            return Response.serverError().entity(obj).build();
+        }
+        String obj = new Gson().toJson("Prestito con ID:" + id + " rientrato");
+        return Response.ok(obj,MediaType.APPLICATION_JSON).build();
+    }
 }
