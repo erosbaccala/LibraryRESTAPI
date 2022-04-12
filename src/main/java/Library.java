@@ -190,7 +190,7 @@ public class Library {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response create(@FormParam("ID") int id){
-        int qt=-1;
+        //int qt=-1;
         /*if(checkParams(id, "user", "aut")) {
             String obj = new Gson().toJson("Parameters must be valid");
             return Response.serverError().entity(obj).build();

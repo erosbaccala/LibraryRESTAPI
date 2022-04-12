@@ -1,5 +1,7 @@
 <html>
     <body>
         <h2>Basic Rest Library :)</h2>
+
+        <a href=""></a>
     </body>
 </html>
