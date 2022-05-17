@@ -226,4 +226,36 @@ public class Library {
         String obj = new Gson().toJson("Prestito con ID:" + id + " rientrato");
         return Response.ok(obj,MediaType.APPLICATION_JSON).build();
     }
+
+@GET
+    @Path("/search")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response search(@FormParam("Autore") String autore, @FormParam("Prezzo") int prezzo){
+        final String QUERY = "SELECT ISBN, Autore, Titolo, Prezzo FROM Libri WHERE Autore = "+autore+" AND Prezzo < "+prezzo;
+        final List<Book> books = new ArrayList<>();
+        final String[] data = Database.getData();
+        try(
+
+                Connection conn = DriverManager.getConnection(data[0]);
+                PreparedStatement pstmt = conn.prepareStatement( QUERY )
+        ) {
+            ResultSet results =  pstmt.executeQuery();
+            while (results.next()){
+                Book book = new Book();
+                book.setTitolo(results.getString("Titolo"));
+                book.setAutore(results.getString("Autore"));
+                book.setISBN(results.getString("ISBN"));
+                book.setPrezzo(results.getInt("Prezzo"));
+                books.add(book);
+
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+            String obj = new Gson().toJson(error);
+            return Response.serverError().entity(obj).build();
+        }
+        String obj = new Gson().toJson(books);
+        return Response.status(200).entity(obj).build();
+    }
 }
