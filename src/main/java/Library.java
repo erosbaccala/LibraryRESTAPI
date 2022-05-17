@@ -227,11 +227,12 @@ public class Library {
         return Response.ok(obj,MediaType.APPLICATION_JSON).build();
     }
 
-@GET
+@POST
     @Path("/search")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     public Response search(@FormParam("Autore") String autore, @FormParam("Prezzo") int prezzo){
+        //final String autore = getParameter("Autore");
         final String QUERY = "SELECT ISBN, Autore, Titolo, Prezzo FROM Libri WHERE Autore = "+autore+" AND Prezzo < "+prezzo;
         final List<Book> books = new ArrayList<>();
         final String[] data = Database.getData();
